@@ -1,0 +1,13 @@
+services:
+  web:
+    volumes:
+      - ./worker:/src/worker
+      - ./web:/src/web
+      - ./templates:/src/templates
+    environment:
+      - ENV=development
+  worker:
+    volumes:
+      - ./worker:/src/worker
+    environment:
+      - ENV=development

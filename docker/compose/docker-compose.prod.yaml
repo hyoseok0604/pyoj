@@ -1,0 +1,5 @@
+services:
+  web:
+    image: ${REGISTRY}/${WEB_REPOSITORY}:${WEB_TAG}
+  worker:
+    image: ${REGISTRY}/${WORKER_REPOSITORY}:${WORKER_TAG}

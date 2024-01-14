@@ -1,0 +1,15 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "files.exclude": {
+    "**/.venv": true
+  },
+  "python.analysis.typeCheckingMode": "basic",
+  "ruff.lint.run": "onSave",
+  "ruff.enable": true
+}

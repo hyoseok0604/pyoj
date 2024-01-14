@@ -1,0 +1,126 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_and_push_image:
+    runs-on: ubuntu-latest
+    name: Build and Push Web, Worker image to Amazon ECR
+    environment: production
+    outputs:
+      shared_any_changed: ${{ steps.changed-files.outputs.shared_any_changed }}
+      web_any_changed: ${{ steps.changed-files.outputs.web_any_changed }}
+      worker_any_changed: ${{ steps.changed-files.outputs.worker_any_changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ap-northeast-2
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Get Changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v40
+        with:
+          files_yaml: |
+            shared:
+              - docker/compose/**
+              - poetry.lock
+              - pyproject.toml
+            web:
+              - docker/web/**
+              - web/**
+            worker:
+              - docker/worker/**
+              - worker/**
+      - name: Build, tag, and push docker image to Amazon ECR (Worker)
+        if: ${{ (steps.changed-files.outputs.shared_any_changed == 'true') || (steps.changed-files.outputs.worker_any_changed == 'true') }}
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          WORKER_REPOSITORY: pyoj-worker
+          WORKER_TAG: ${{ github.sha }}
+        run: |
+          ./scripts/compose/production.sh build worker --quiet
+          ./scripts/compose/production.sh push worker
+      - name: Build, tag, and push docker image to Amazon ECR (Web)
+        if: ${{ (steps.changed-files.outputs.shared_any_changed == 'true') || (steps.changed-files.outputs.web_any_changed == 'true') }}
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          WEB_REPOSITORY: pyoj-web
+          WEB_TAG: ${{ github.sha }}
+        run: |
+          ./scripts/compose/production.sh build web --quiet
+          ./scripts/compose/production.sh push web
+  pull_image_and_run:
+    runs-on: [self-hosted, ec2]
+    name: Pull image and Run docker compose
+    environment: production
+    needs: [build_and_push_image]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            docker
+            scripts
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ap-northeast-2
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Run Basic Services (DB, Server, ...)
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DATABASE: ${{ secrets.POSTGRES_DATABASE }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          SESSION_KEY: ${{ secrets.SESSION_KEY }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+        run: |
+          ./scripts/compose/production.sh up --quiet-pull -d postgres rabbitmq redis caddy
+      - name: Pull image and Run (Web)
+        if: ${{ (needs.build_and_push_image.outputs.shared_any_changed == 'true') || (needs.build_and_push_image.outputs.web_any_changed == 'true') }}
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DATABASE: ${{ secrets.POSTGRES_DATABASE }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          SESSION_KEY: ${{ secrets.SESSION_KEY }}
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          WEB_REPOSITORY: pyoj-web
+          WEB_TAG: ${{ github.sha }}
+        run: |
+          ./scripts/compose/production.sh pull -q web
+          ./scripts/compose/production.sh up -d --no-deps --pull never web
+      - name: Pull image and Run (Worker)
+        if: ${{ (needs.build_and_push_image.outputs.shared_any_changed == 'true') || (needs.build_and_push_image.outputs.worker_any_changed == 'true') }}
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DATABASE: ${{ secrets.POSTGRES_DATABASE }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          SESSION_KEY: ${{ secrets.SESSION_KEY }}
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          WORKER_REPOSITORY: pyoj-worker
+          WORKER_TAG: ${{ github.sha }}
+        run: |
+          ./scripts/compose/production.sh pull -q worker
+          ./scripts/compose/production.sh up -d --no-deps --pull never worker
+      - name: Cleanup image
+        run: |
+          docker image prune --all --force

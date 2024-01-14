@@ -1,0 +1,9 @@
+ignore_worker.txt
+.venv
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.vscode
+docker
+web
+templates
