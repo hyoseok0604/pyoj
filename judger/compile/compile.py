@@ -3,8 +3,8 @@ import shlex
 import stat
 import subprocess
 
-from ..logger import _log
-from .result import CompileResult
+from judger.compile.result import CompileResult
+from judger.logger import _log
 
 
 def compile(
