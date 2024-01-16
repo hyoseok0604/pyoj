@@ -26,7 +26,7 @@ class BaseCgroups:
             _log.warn("Failed to remove directory.", exc_info=e)
 
     def _check_mount(self):
-        if (mount_type := get_mount_type(self.path)) != "cgroups":
+        if (mount_type := get_mount_type(self.path)) != "cgroup":
             raise CgroupsException(
                 "Expected mount type is cgroups "
                 f"but current mount type is {mount_type}."
