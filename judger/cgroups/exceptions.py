@@ -1,0 +1,2 @@
+class CgroupsException(Exception):
+    pass
