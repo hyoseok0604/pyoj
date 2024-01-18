@@ -1,17 +1,20 @@
 import os
+from contextlib import AbstractContextManager
+from types import TracebackType
 
 from judger.cgroups.exceptions import CgroupsException
 from judger.logger import _log
 from judger.utils.mount import get_mount_options, get_mount_type
 
 
-class BaseCgroups:
+class BaseCgroups(AbstractContextManager):
     def __init__(self, path: str, name: str, subsystem: str) -> None:
         self.path = path
         self.name = name
         self.subsystem = subsystem
 
         self._check_mount()
+        self._create_group_directory()
 
     def set_pid(self, pid: int):
         self._write("cgroup.procs", str(pid))
@@ -19,11 +22,20 @@ class BaseCgroups:
     def __enter__(self):
         return self
 
-    def __exit__(self):
+    def __exit__(
+        self,
+        __exc_type: type[BaseException] | None,
+        __exc_value: BaseException | None,
+        __traceback: TracebackType | None,
+    ) -> bool | None:
         try:
-            os.rmdir(os.path.join(self.path, self.name))
+            cleanup_target_directory = os.path.join(self.path, self.name)
+            os.rmdir(cleanup_target_directory)
+            _log.debug(f"Cleanup directory success. {cleanup_target_directory}")
         except Exception as e:
             _log.warn("Failed to remove directory.", exc_info=e)
+
+        return False
 
     def _check_mount(self):
         if (mount_type := get_mount_type(self.path)) != "cgroup":
