@@ -10,6 +10,7 @@ from judger.logger import _log
 def compile(
     working_directory: str, compile_command: str, timeout: int
 ) -> CompileResult:
+    _log.info("Compile started.")
     try:
         os.chdir(working_directory)
 
