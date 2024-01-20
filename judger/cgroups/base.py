@@ -1,5 +1,5 @@
 import os
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, suppress
 from types import TracebackType
 
 from judger.cgroups.exceptions import CgroupsException
@@ -8,12 +8,15 @@ from judger.utils.mount import get_mount_options, get_mount_type
 
 
 class BaseCgroups(AbstractContextManager):
+    __namespace = "judger"
+
     def __init__(self, path: str, name: str, subsystem: str) -> None:
         self.path = path
         self.name = name
         self.subsystem = subsystem
 
         self._check_mount()
+        self._create_namespace()
         self._create_group_directory()
 
     def set_pid(self, pid: int):
@@ -29,9 +32,11 @@ class BaseCgroups(AbstractContextManager):
         __traceback: TracebackType | None,
     ) -> bool | None:
         try:
-            cleanup_target_directory = os.path.join(self.path, self.name)
+            cleanup_target_directory = os.path.join(
+                self.path, self.__namespace, self.name
+            )
             os.rmdir(cleanup_target_directory)
-            _log.debug(f"Cleanup directory success. {cleanup_target_directory}")
+            _log.info(f"Cleanup directory success. {cleanup_target_directory}")
         except Exception as e:
             _log.warn("Failed to remove directory.", exc_info=e)
 
@@ -40,7 +45,7 @@ class BaseCgroups(AbstractContextManager):
     def _check_mount(self):
         if (mount_type := get_mount_type(self.path)) != "cgroup":
             raise CgroupsException(
-                "Expected mount type is cgroups "
+                "Expected mount type is cgroup "
                 f"but current mount type is {mount_type}."
             )
 
@@ -49,22 +54,30 @@ class BaseCgroups(AbstractContextManager):
         ) is None or self.subsystem not in mount_options.split(","):
             raise CgroupsException(f"Mount options must contain {self.subsystem}.")
 
+    def _create_namespace(self):
+        with suppress(FileExistsError):
+            os.mkdir(os.path.join(self.path, self.__namespace))
+
     def _create_group_directory(self):
         try:
-            os.mkdir(os.path.join(self.path, self.name))
+            os.mkdir(os.path.join(self.path, self.__namespace, self.name))
         except Exception as e:
             raise CgroupsException("Failed to create group directory.") from e
 
     def _read(self, filename: str) -> list[str]:
         try:
-            with open(os.path.join(self.path, self.name, filename)) as f:
+            with open(
+                os.path.join(self.path, self.__namespace, self.name, filename)
+            ) as f:
                 return f.readlines()
         except Exception as e:
-            raise CgroupsException(f"Failed to read operation from {filename}.") from e
+            raise CgroupsException(f"Failed to read from {filename}.") from e
 
     def _write(self, filename: str, content: str) -> None:
         try:
-            with open(os.path.join(self.path, self.name, filename), "w") as f:
+            with open(
+                os.path.join(self.path, self.__namespace, self.name, filename), "w"
+            ) as f:
                 f.write(content)
         except Exception as e:
-            raise CgroupsException(f"Failed to write operation into {filename}.") from e
+            raise CgroupsException(f"Failed to write into {filename}.") from e
