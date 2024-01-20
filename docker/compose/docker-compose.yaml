@@ -28,6 +28,7 @@ services:
     build:
       context: .
       dockerfile: docker/worker/Dockerfile
+    cgroup: private
     restart: unless-stopped
     environment:
       - POSTGRES_URI=postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE}
