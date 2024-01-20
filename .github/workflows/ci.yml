@@ -67,6 +67,8 @@ jobs:
           RABBITMQ_URI: amqp://guest:guest@localhost:5672/
           SESSION_KEY: key
         run: poetry run pytest --junitxml=junit/test-results.xml
+      - name: Test Judger with pytest
+        run: ./scripts/test-judger.sh
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
