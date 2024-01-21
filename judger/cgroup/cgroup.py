@@ -1,5 +1,5 @@
 import os
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, suppress
 from types import TracebackType
 
 from judger.cgroup.exceptions import CgroupsException
@@ -55,7 +55,7 @@ class Cgroup(AbstractContextManager):
     ) -> bool | None:
         try:
             cleanup_target_directory = os.path.join(self.path, self.name)
-            os.rmdir(cleanup_target_directory)
+            # os.rmdir(cleanup_target_directory)
             _log.info(f"Cleanup directory success. {cleanup_target_directory}")
         except Exception as e:
             _log.warn("Failed to remove directory.", exc_info=e)
@@ -71,6 +71,8 @@ class Cgroup(AbstractContextManager):
 
     def _create_group_directory(self):
         try:
+            with suppress(Exception):
+                os.rmdir(os.path.join(self.path, self.name))
             os.mkdir(os.path.join(self.path, self.name))
         except Exception as e:
             raise CgroupsException("Failed to create group directory.") from e
