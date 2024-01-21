@@ -7,7 +7,7 @@ import stat
 from pty import STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO
 from typing import Never
 
-from judger.cgroups import CpuacctCgroups, MemoryCgroups
+from judger.cgroup import Cgroup
 from judger.execute.exceptions import ExecuteException
 from judger.execute.result import ExecuteResult
 from judger.logger import _log
@@ -93,19 +93,12 @@ def _execute_parent(
 
     _handle_execve_under_ptrace(pid)
 
-    with (
-        MemoryCgroups("/cgroups/memory", str(pid)) as memory_cgroups,
-        CpuacctCgroups("/cgroups/cpuacct", str(pid)) as cpuacct_cgroups,
-    ):
-        memory_cgroups.set_pid(pid)
-        cpuacct_cgroups.set_pid(pid)
-        memory_cgroups.set_memory_limit(memory_limit)
+    with Cgroup("/sys/fs/cgroup", str(pid)) as cgroup:
+        cgroup.set_pid(pid)
+        cgroup.set_max_memory_usage(memory_limit)
 
         while True:
             _, status = os.waitpid(pid, 0)
-
-            current_memory = memory_cgroups.get_memory_usage()
-            memory = max(memory, current_memory)
 
             if os.WIFEXITED(status):
                 if os.WEXITSTATUS(status) == 0:
@@ -123,8 +116,7 @@ def _execute_parent(
 
                 result = _termsig_to_execute_result(
                     status,
-                    memory_cgroups,
-                    cpuacct_cgroups,
+                    cgroup,
                     time_limit,
                 )
                 break
@@ -152,7 +144,8 @@ def _execute_parent(
                 ):
                     _log.info("Handle ptrace event exit.")
 
-                    time = cpuacct_cgroups.get_cpu_time()
+                    time = cgroup.get_cpu_time() // 1000
+                    memory = cgroup.get_max_memory_usage()
 
                     ptrace_cont(pid)
                     continue
@@ -196,17 +189,16 @@ def _handle_execve_under_ptrace(pid: int):
 
 def _termsig_to_execute_result(
     status: int,
-    memory_cgroups: MemoryCgroups,
-    cpuacct_cgroups: CpuacctCgroups,
+    cgroup: Cgroup,
     time_limit: int,
 ) -> ExecuteResult:
     sig = os.WTERMSIG(status)
 
     if sig == signal.SIGKILL:
-        if memory_cgroups.get_oom_kill_count() == 1:
+        if cgroup.get_oom_kill() == 1:
             _log.info("Memory limit exceeded.")
             return ExecuteResult.MEMORY_LIMIT_EXCEEDED
-        if cpuacct_cgroups.get_cpu_time() >= time_limit:
+        if cgroup.get_cpu_time() >= time_limit:
             _log.info("Time limit exceeded.")
             return ExecuteResult.TIME_LIMIT_EXCEEDED
 
