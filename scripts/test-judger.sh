@@ -1,0 +1,2 @@
+docker build -q -f docker/test/Dockerfile -t pyoj-test-judger:latest .
+docker run --rm --cgroup-parent pyojtest.slice -v /sys/fs/cgroup/pyojtest.slice:/sys/fs/cgroup:rw --cap-add SYS_ADMIN pyoj-test-judger:latest

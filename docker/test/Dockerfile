@@ -10,8 +10,8 @@ ENV POETRY_NO_INTERACTION=1 \
 ARG POETRY_HOME=/opt/poetry
 ARG POETRY_VERSION=1.7.1
 
-RUN groupadd -g 10001 celery && \
-  useradd -u 10000 -g celery celery
+RUN groupadd -g 10001 test && \
+  useradd -u 10000 -g test test
 
 RUN apt-get -y update && apt-get -y install curl gcc g++
 
@@ -21,8 +21,9 @@ ENV PATH="${PATH}:${POETRY_HOME}/bin"
 WORKDIR /src
 COPY poetry.lock pyproject.toml /src/
 
-RUN poetry install --no-interaction --no-ansi --no-root --without test,web
+RUN poetry install --no-interaction --no-ansi --no-root --without web
 
-COPY --chown=celery:celery . .
+COPY --chown=test:test judger judger
+COPY --chown=test:test docker/test/entrypoint.sh entrypoint.sh
 
-ENTRYPOINT [ "./docker/worker/entrypoint.sh" ]
+ENTRYPOINT [ "./entrypoint.sh" ]
