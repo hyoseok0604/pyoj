@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Mount cgroup v2
-echo "+memory +cpu" > /sys/fs/cgroup/cgroup.subtree_control
+mkdir -p /sys/fs/cgroup/init
+xargs -rn1 < /sys/fs/cgroup/cgroup.procs > /sys/fs/cgroup/init/cgroup.procs || :
+sed -e 's/ / +/g' -e 's/^/+/' < /sys/fs/cgroup/cgroup.controllers \
+  > /sys/fs/cgroup/cgroup.subtree_control
+
 chown -hR test:test /sys/fs/cgroup
 
 chown test:test /src
