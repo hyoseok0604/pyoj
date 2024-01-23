@@ -11,6 +11,8 @@ pydantic = "^2.5.3"
 pydantic-settings = "^2.1.0"
 celery = "^5.3.6"
 redis = "^5.0.1"
+sqlalchemy = "^2.0.25"
+psycopg = {extras = ["binary"], version = "^3.1.17"}
 
 
 [tool.poetry.group.test.dependencies]
@@ -22,6 +24,8 @@ pytest-cov = "^4.1.0"
 
 [tool.poetry.group.web.dependencies]
 fastapi = {extras = ["all"], version = "^0.109.0"}
+alembic = "^1.13.1"
+alembic-postgresql-enum = "^1.0.2"
 
 [build-system]
 requires = ["poetry-core"]

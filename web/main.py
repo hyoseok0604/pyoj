@@ -1,10 +1,30 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import APIRouter, FastAPI
+from sqlalchemy.orm import Session
 from uvicorn.config import LOGGING_CONFIG
 
 from web.core import settings
+from web.core.database import async_session
+from web.core.migration import migration
+from web.models.base import BaseModel
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with async_session() as session:
+
+        def wrapped_migration(session: Session):
+            migration(session.connection(), BaseModel.metadata)
+
+        await session.run_sync(wrapped_migration)
+        await session.commit()
+
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 view_router = APIRouter()
 
