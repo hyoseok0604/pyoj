@@ -29,8 +29,9 @@ services:
       context: .
       dockerfile: docker/worker/Dockerfile
     cgroup_parent: pyoj.slice
-    volumes:
-      - /sys/fs/cgroup/pyoj.slice:/sys/fs/cgroup:rw
+    privileged: true
+    # volumes:
+    #   - /sys/fs/cgroup/pyoj.slice:/sys/fs/cgroup:rw
     restart: unless-stopped
     environment:
       - POSTGRES_URI=postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE}
