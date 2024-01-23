@@ -55,7 +55,7 @@ class Cgroup(AbstractContextManager):
     ) -> bool | None:
         try:
             cleanup_target_directory = os.path.join(self.path, self.name)
-            # os.rmdir(cleanup_target_directory)
+            os.rmdir(cleanup_target_directory)
             _log.info(f"Cleanup directory success. {cleanup_target_directory}")
         except Exception as e:
             _log.warn("Failed to remove directory.", exc_info=e)
@@ -78,15 +78,17 @@ class Cgroup(AbstractContextManager):
             raise CgroupsException("Failed to create group directory.") from e
 
     def _read(self, filename: str) -> list[str]:
+        file = os.path.join(self.path, self.name, filename)
         try:
-            with open(os.path.join(self.path, self.name, filename)) as f:
+            with open(file) as f:
                 return f.readlines()
         except Exception as e:
             raise CgroupsException(f"Failed to read from {filename}.") from e
 
     def _write(self, filename: str, content: str) -> None:
+        file = os.path.join(self.path, self.name, filename)
         try:
-            with open(os.path.join(self.path, self.name, filename), "w") as f:
+            with open(file, "w") as f:
                 f.write(content)
         except Exception as e:
-            raise CgroupsException(f"Failed to write into {filename}.") from e
+            raise CgroupsException(f"Failed to write into {file}.") from e
