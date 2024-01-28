@@ -33,7 +33,7 @@ app = FastAPI(lifespan=lifespan)
 
 view_router = APIRouter()
 
-api_router = APIRouter(dependencies=[Depends(set_user_state_dependency)])
+api_router = APIRouter(dependencies=[Depends(set_user_state_dependency)], prefix="/api")
 
 api_router.include_router(user_api_router)
 api_router.include_router(auth_api_router)
