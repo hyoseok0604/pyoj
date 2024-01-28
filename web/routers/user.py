@@ -10,7 +10,9 @@ from web.services.user import UserService
 api_router = APIRouter(prefix="/users")
 
 
-@api_router.post("/", response_model=CreateUserResponseSchema)
+@api_router.post(
+    "", response_model=CreateUserResponseSchema, status_code=status.HTTP_201_CREATED
+)
 async def create_user_api(schema: CreateUserRequestSchema, service: UserService):
     user = await service.create(schema)
 
