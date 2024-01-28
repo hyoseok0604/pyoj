@@ -1,14 +1,19 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from uvicorn.config import LOGGING_CONFIG
 
 from web.core import settings
 from web.core.database import async_session
+from web.core.dependencies import set_user_state_dependency
 from web.core.migration import migration
 from web.models.base import BaseModel
+from web.routers.auth import api_router as auth_api_router
+from web.routers.user import api_router as user_api_router
+from web.services.exception import ServiceException
 
 
 @asynccontextmanager
@@ -28,10 +33,20 @@ app = FastAPI(lifespan=lifespan)
 
 view_router = APIRouter()
 
-api_router = APIRouter()
+api_router = APIRouter(dependencies=[Depends(set_user_state_dependency)], prefix="/api")
+
+api_router.include_router(user_api_router)
+api_router.include_router(auth_api_router)
 
 app.include_router(view_router)
 app.include_router(api_router)
+
+
+@app.exception_handler(ServiceException)
+async def service_exception_handler(request: Request, exception: ServiceException):
+    return JSONResponse(
+        exception.messages, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
+    )
 
 
 @app.get("/")

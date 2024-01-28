@@ -26,6 +26,7 @@ pytest-cov = "^4.1.0"
 fastapi = {extras = ["all"], version = "^0.109.0"}
 alembic = "^1.13.1"
 alembic-postgresql-enum = "^1.0.2"
+bcrypt = "^4.1.2"
 
 [build-system]
 requires = ["poetry-core"]
