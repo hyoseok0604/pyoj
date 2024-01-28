@@ -7,11 +7,10 @@ from pydantic import SecretStr, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 
 from web.models.user import User
-from web.schemas import SerializeToModel
-from web.schemas.base import BaseSchema
+from web.schemas.base import BaseSchema, SerializeToModelSchema
 
 
-class CreateUserRequestSchema(SerializeToModel[User], BaseSchema):
+class CreateUserRequestSchema(SerializeToModelSchema[User]):
     username: str
     password1: SecretStr
     password2: SecretStr
