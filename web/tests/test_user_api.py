@@ -92,3 +92,26 @@ async def test_create_user_api_duplicated_username(client):
 
     assert response.status_code == 422
     assert response.json() == {"username": "이미 존재하는 아이디입니다."}
+
+
+@pytest.mark.anyio
+async def test_get_user_api(client):
+    response = await client.get("/api/users/1")
+
+    assert response.status_code == 404
+
+    response = await client.post(
+        "/api/users",
+        json={
+            "username": "username",
+            "password1": "password",
+            "password2": "password",
+        },
+    )
+
+    id = response.json().get("id")
+
+    response = await client.get(f"/api/users/{id}")
+
+    assert response.status_code == 200
+    assert response.json().get("username") == "username"
