@@ -12,7 +12,7 @@ class BaseSchema(Schema):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-class SerializeToModelSchema(Generic[T], BaseSchema):
+class SerializeToModelSchema(BaseSchema, Generic[T]):
     @model_serializer
     def serialize(self) -> T:
         ...
