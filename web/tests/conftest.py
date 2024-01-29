@@ -58,14 +58,12 @@ async def savepoint_connection():
         yield connection
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 async def life_span_app(savepoint_connection: AsyncConnection):
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         async with savepoint_connection.begin() as transaction:
-            async with AsyncSession(
-                bind=savepoint_connection, join_transaction_mode="create_savepoint"
-            ) as session:
+            async with AsyncSession(bind=savepoint_connection) as session:
 
                 def wrapped_migration(session: Session):
                     migration(session.connection(), BaseModel.metadata)
@@ -85,18 +83,21 @@ async def life_span_app(savepoint_connection: AsyncConnection):
 
 @pytest.fixture(scope="function")
 async def client(savepoint_connection: AsyncConnection, life_span_app: FastAPI):
-    async with AsyncSession(
-        bind=savepoint_connection, join_transaction_mode="create_savepoint"
-    ) as session:
+    async with savepoint_connection.begin_nested() as nested_transaction:
+        async with AsyncSession(
+            bind=savepoint_connection, join_transaction_mode="create_savepoint"
+        ) as session:
 
-        async def get_test_async_session() -> AsyncGenerator[AsyncSession, None]:
-            yield session
+            async def get_test_async_session() -> AsyncGenerator[AsyncSession, None]:
+                yield session
 
-        life_span_app.dependency_overrides[get_async_session] = get_test_async_session
+            life_span_app.dependency_overrides[
+                get_async_session
+            ] = get_test_async_session
 
-        async with AsyncClient(
-            app=life_span_app, base_url="http://localhost:8080"
-        ) as client:
-            yield client
+            async with AsyncClient(
+                app=life_span_app, base_url="http://localhost:8080"
+            ) as client:
+                yield client
 
-        await session.rollback()
+        await nested_transaction.rollback()
