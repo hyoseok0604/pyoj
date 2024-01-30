@@ -64,6 +64,8 @@ def monkeypatch_response_set_cookie(monkeypatch):
 
     monkeypatch.setattr("starlette.responses.Response.set_cookie", set_cookie)
 
+    yield
+
     delattr(Response, "_set_cookie")
 
 
