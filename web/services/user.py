@@ -20,6 +20,7 @@ class UserService:
         try:
             self.session.add(user)
             await self.session.commit()
+            await self.session.refresh(user)
         except IntegrityError as e:
             error = e.orig
             if error is not None and isinstance(error, UniqueViolation):

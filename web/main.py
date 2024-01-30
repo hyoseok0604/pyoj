@@ -13,6 +13,7 @@ from web.core.migration import migration
 from web.models.base import BaseModel
 from web.routers.auth import api_router as auth_api_router
 from web.routers.user import api_router as user_api_router
+from web.services.auth import LoginFailed
 from web.services.exception import ServiceException
 
 
@@ -44,9 +45,12 @@ app.include_router(api_router)
 
 @app.exception_handler(ServiceException)
 async def service_exception_handler(request: Request, exception: ServiceException):
-    return JSONResponse(
-        exception.messages, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
-    )
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    if isinstance(exception, LoginFailed):
+        status_code = status.HTTP_401_UNAUTHORIZED
+
+    return JSONResponse(exception.messages, status_code=status_code)
 
 
 @app.get("/")
