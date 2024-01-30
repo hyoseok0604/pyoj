@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.anyio
-async def test_auth_api(client):
+async def test_auth_api(client, monkeypatch_response_set_cookie):
     response = await client.get("/api/me")
     assert response.status_code == 401
 

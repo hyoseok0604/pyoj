@@ -8,6 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy import Engine, MetaData, create_engine
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Session
+from starlette.responses import Response
 
 from web.core.database import async_engine, get_async_session
 from web.core.migration import migration
@@ -50,6 +51,20 @@ def empty_metadata() -> MetaData:
 @pytest.fixture(scope="session")
 def metadata() -> MetaData:
     return BaseModel.metadata
+
+
+@pytest.fixture
+def monkeypatch_response_set_cookie(monkeypatch):
+    original_set_cookie = Response.set_cookie
+    Response._set_cookie = original_set_cookie  # type: ignore
+
+    def set_cookie(self, *args, **kwargs):
+        del kwargs["secure"]
+        self._set_cookie(*args, **kwargs, secure=False)
+
+    monkeypatch.setattr("starlette.responses.Response.set_cookie", set_cookie)
+
+    delattr(Response, "_set_cookie")
 
 
 @pytest.fixture(scope="session")
