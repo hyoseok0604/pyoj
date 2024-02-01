@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
+from web.core.dependencies import SessionUserDependency
+from web.logger import _log
 from web.schemas.auth import LoginRequestSchema
 from web.services.auth import AuthService
 
@@ -32,15 +34,18 @@ async def logout_api(request: Request, service: AuthService):
     if session_key is None:
         return response
 
-    await service.delete_session(session_key)
+    is_success = await service.delete_session(session_key)
+    if not is_success:
+        _log.warn("Session data was not deleted correctly.")
+
     response.delete_cookie("session")
 
     return response
 
 
 @api_router.get("/me")
-async def me_api(request: Request):
-    if request.state.user is None:
+async def me_api(user: SessionUserDependency):
+    if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    return request.state.user
+    return user

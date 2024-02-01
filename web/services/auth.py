@@ -4,11 +4,16 @@ import secrets
 from typing import Any, Coroutine, cast
 
 import bcrypt
+from pydantic import ValidationError
 
 from web.core.database import AsyncRedisDependency, AsyncSessionDependency
 from web.core.decorators import as_annotated_dependency
-from web.schemas.auth import LoginRequestSchema
-from web.services.exception import ServiceException
+from web.schemas.auth import LoginRequestSchema, SessionUser
+from web.services.exceptions import (
+    CreateSessionFailed,
+    LoginFailed,
+    VerifySessionFailed,
+)
 from web.services.user import UserService
 
 
@@ -59,30 +64,27 @@ class AuthService:
     def generate_session_key(self):
         return secrets.token_urlsafe()
 
-    async def verify_session(self, session_key: str) -> dict[str, str | int]:
+    async def verify_session(self, session_key: str) -> SessionUser:
         session_data = await cast(
-            Coroutine[Any, Any, str], self.redis.hget(session_key, "session_data")
+            Coroutine[Any, Any, str | None],
+            self.redis.hget(session_key, "session_data"),
         )
 
-        return json.loads(session_data)
+        if session_data is None:
+            raise VerifySessionFailed()
 
-    async def delete_session(self, session_key: str):
-        await cast(
+        try:
+            session_data_dict = json.loads(session_data)
+            session_user = SessionUser(**session_data_dict)
+
+            return session_user
+        except ValidationError as e:
+            raise VerifySessionFailed() from e
+
+    async def delete_session(self, session_key: str) -> bool:
+        result = await cast(
             Coroutine[Any, Any, int],
             self.redis.hdel(session_key, "session_data"),  # type: ignore
         )
 
-
-class LoginFailed(ServiceException):
-    def __init__(self) -> None:
-        super().__init__({"_details": "아이디 또는 비밀번호가 일치하지 않습니다."})
-
-
-class CreateSessionFailed(ServiceException):
-    def __init__(self) -> None:
-        super().__init__({"_details": "다시 시도해주세요."})
-
-
-class VerifySessionFailed(ServiceException):
-    def __init__(self) -> None:
-        super().__init__({})
+        return result == 1
