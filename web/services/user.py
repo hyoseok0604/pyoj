@@ -6,7 +6,7 @@ from web.core.database import AsyncSessionDependency
 from web.core.decorators import as_annotated_dependency
 from web.models.user import User, UserConstraints
 from web.schemas.user import CreateUserRequestSchema as CreateUserSchema
-from web.services.exception import ServiceException
+from web.services.exceptions import UsernameDuplicated
 
 
 @as_annotated_dependency
@@ -25,7 +25,7 @@ class UserService:
             error = e.orig
             if error is not None and isinstance(error, UniqueViolation):
                 if error.diag.constraint_name == UserConstraints.USERNAME_UNIQUE.value:
-                    raise DuplicatedUsername() from e
+                    raise UsernameDuplicated() from e
 
             raise e
 
@@ -44,8 +44,3 @@ class UserService:
         user = await self.session.scalar(stmt)
 
         return user
-
-
-class DuplicatedUsername(ServiceException):
-    def __init__(self) -> None:
-        super().__init__({"username": "이미 존재하는 아이디입니다."})
