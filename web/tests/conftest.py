@@ -53,7 +53,7 @@ def metadata() -> MetaData:
     return BaseModel.metadata
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def monkeypatch_response_set_cookie(monkeypatch):
     original_set_cookie = Response.set_cookie
     Response._set_cookie = original_set_cookie  # type: ignore
@@ -118,3 +118,17 @@ async def client(savepoint_connection: AsyncConnection, life_span_app: FastAPI):
                 yield client
 
         await nested_transaction.rollback()
+
+
+@pytest.fixture
+async def create_user(client):
+    response = await client.post(
+        "/api/users",
+        json={
+            "username": "username",
+            "password1": "password",
+            "password2": "password",
+        },
+    )
+
+    return response.json()
