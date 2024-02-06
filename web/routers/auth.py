@@ -17,7 +17,7 @@ async def login_api(schema: LoginRequestSchema, service: AuthService):
     response.set_cookie(
         "session",
         session_key,
-        max_age=int(service.session_timeout.total_seconds()),
+        max_age=int(service.session_service.session_timeout.total_seconds()),
         secure=True,
         httponly=True,
     )
@@ -34,7 +34,7 @@ async def logout_api(request: Request, service: AuthService):
     if session_key is None:
         return response
 
-    is_success = await service.delete_session(session_key)
+    is_success = await service.logout(session_key)
     if not is_success:
         _log.warn("Session data was not deleted correctly.")
 
@@ -44,8 +44,8 @@ async def logout_api(request: Request, service: AuthService):
 
 
 @api_router.get("/me")
-async def me_api(user: SessionUserDependency):
-    if user is None:
+async def me_api(session_user: SessionUserDependency):
+    if session_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    return user
+    return session_user.user
