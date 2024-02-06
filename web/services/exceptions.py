@@ -6,7 +6,15 @@ class AuthException(ServiceException):
     ...
 
 
-class LoginFailed(AuthException):
+class PermissionException(ServiceException):
+    messages = {"_details": "권한이 없습니다."}
+
+
+class LoginRequiredException(AuthException):
+    messages = {"_details": "로그인이 필요한 기능입니다."}
+
+
+class UserameOrPasswordMismatched(AuthException):
     messages = {"_details": "아이디 또는 비밀번호가 일치하지 않습니다."}
 
 

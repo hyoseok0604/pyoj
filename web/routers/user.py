@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
+from web.core.dependencies import SessionUserDependency
 from web.schemas.user import (
     CreateUserRequestSchema,
     CreateUserResponseSchema,
@@ -27,3 +28,10 @@ async def get_user_api(id: int, service: UserService):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     return user
+
+
+@api_router.delete("/{id}")
+async def delete_user_api(id: int, user: SessionUserDependency, service: UserService):
+    deleted_user = await service.delete_user_by_id(id, user)
+
+    return deleted_user

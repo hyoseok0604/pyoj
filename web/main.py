@@ -12,7 +12,7 @@ from web.core.migration import migration
 from web.models.base import BaseModel
 from web.routers.auth import api_router as auth_api_router
 from web.routers.user import api_router as user_api_router
-from web.services.exceptions import AuthException, ServiceException
+from web.services.exceptions import AuthException, PermissionException, ServiceException
 
 
 @asynccontextmanager
@@ -34,8 +34,10 @@ view_router = APIRouter()
 
 api_router = APIRouter(prefix="/api")
 
-api_router.include_router(user_api_router)
-api_router.include_router(auth_api_router)
+api_routers: list[APIRouter] = [user_api_router, auth_api_router]
+
+for router in api_routers:
+    api_router.include_router(router)
 
 app.include_router(view_router)
 app.include_router(api_router)
@@ -47,6 +49,9 @@ async def service_exception_handler(request: Request, exception: ServiceExceptio
 
     if isinstance(exception, AuthException):
         status_code = status.HTTP_401_UNAUTHORIZED
+
+    if isinstance(exception, PermissionException):
+        status_code = status.HTTP_403_FORBIDDEN
 
     return JSONResponse(exception.messages, status_code=status_code)
 
