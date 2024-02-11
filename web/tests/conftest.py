@@ -132,3 +132,12 @@ async def create_user(client):
     )
 
     return response.json()
+
+
+@pytest.fixture
+async def logged_in_client(client: AsyncClient, create_user):
+    await client.post(
+        "/api/login", json={"username": "username", "password": "password"}
+    )
+
+    yield client
