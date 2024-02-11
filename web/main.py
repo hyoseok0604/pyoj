@@ -11,8 +11,14 @@ from web.core.database import async_session
 from web.core.migration import migration
 from web.models.base import BaseModel
 from web.routers.auth import api_router as auth_api_router
+from web.routers.problem import api_router as problem_api_router
 from web.routers.user import api_router as user_api_router
-from web.services.exceptions import AuthException, PermissionException, ServiceException
+from web.services.exceptions import (
+    AuthException,
+    NotFoundException,
+    PermissionException,
+    ServiceException,
+)
 
 
 @asynccontextmanager
@@ -34,7 +40,7 @@ view_router = APIRouter()
 
 api_router = APIRouter(prefix="/api")
 
-api_routers: list[APIRouter] = [user_api_router, auth_api_router]
+api_routers: list[APIRouter] = [user_api_router, auth_api_router, problem_api_router]
 
 for router in api_routers:
     api_router.include_router(router)
@@ -49,9 +55,10 @@ async def service_exception_handler(request: Request, exception: ServiceExceptio
 
     if isinstance(exception, AuthException):
         status_code = status.HTTP_401_UNAUTHORIZED
-
-    if isinstance(exception, PermissionException):
+    elif isinstance(exception, PermissionException):
         status_code = status.HTTP_403_FORBIDDEN
+    elif isinstance(exception, NotFoundException):
+        status_code = status.HTTP_404_NOT_FOUND
 
     return JSONResponse(exception.messages, status_code=status_code)
 
