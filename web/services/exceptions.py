@@ -6,6 +6,10 @@ class AuthException(ServiceException):
     ...
 
 
+class NotFoundException(ServiceException):
+    messages = {"_details": "존재하지 않는 리소스입니다."}
+
+
 class PermissionException(ServiceException):
     messages = {"_details": "권한이 없습니다."}
 
