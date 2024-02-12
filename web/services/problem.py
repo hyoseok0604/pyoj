@@ -96,7 +96,12 @@ class ProblemService:
         schema: UpdateProblemRequestSchema,
     ):
         problem = await self.session.get(
-            Problem, id, options=[selectinload(Problem.creator), undefer_group("")]
+            Problem,
+            id,
+            options=[
+                selectinload(Problem.creator),
+                undefer_group("problem_descriptions"),
+            ],
         )
 
         if session_user is None:
