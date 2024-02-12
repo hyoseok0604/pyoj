@@ -75,7 +75,7 @@ class ProblemService:
             .limit(schema.count)
             .offset(schema.offset)
             .order_by(Problem.id.desc() if schema.sort == "desc" else Problem.id.asc())
-            .where(Problem.is_public)
+            .where(Problem.is_public.is_(schema.is_public))
             .options(selectinload(Problem.creator))
         )
 
