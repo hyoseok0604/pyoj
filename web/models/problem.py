@@ -45,7 +45,7 @@ class Testcase(BaseModel):
     __tablename__ = "testcase"
 
     id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
-    priblem_id: Mapped[int] = mapped_column(
+    problem_id: Mapped[int] = mapped_column(
         ForeignKey("problem.id", ondelete="CASCADE")
     )
     problem: Mapped["Problem"] = relationship(back_populates="testcases")
