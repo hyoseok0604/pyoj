@@ -121,23 +121,42 @@ async def client(savepoint_connection: AsyncConnection, life_span_app: FastAPI):
 
 
 @pytest.fixture
-async def create_user(client):
-    response = await client.post(
-        "/api/users",
-        json={
-            "username": "username",
-            "password1": "password",
-            "password2": "password",
-        },
-    )
+async def create_users(request, client):
+    try:
+        count = request.param.get("count")
+    except AttributeError:
+        count = 1
 
-    return response.json()
+    users = [
+        {"username": f"username{i}", "password": f"password{i}"} for i in range(count)
+    ]
+
+    for user in users:
+        response = await client.post(
+            "/api/users",
+            json={
+                "username": user["username"],
+                "password1": user["password"],
+                "password2": user["password"],
+            },
+        )
+
+        user.update({"id": response.json().get("id")})
+
+    return users
 
 
 @pytest.fixture
-async def logged_in_client(client: AsyncClient, create_user):
-    await client.post(
-        "/api/login", json={"username": "username", "password": "password"}
-    )
+async def login(client: AsyncClient, create_users):
+    async def _login(idx: int):
+        assert idx < len(create_users)
 
-    yield client
+        await client.post(
+            "/api/login",
+            json={
+                "username": create_users[idx]["username"],
+                "password": create_users[idx]["password"],
+            },
+        )
+
+    return _login
