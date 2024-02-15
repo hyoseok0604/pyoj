@@ -13,6 +13,7 @@ class BaseProblemWithoutCreator(BaseSchema):
     time_limit: TimeLimit
     memory_limit: MemoryLimit
     created_at: datetime
+    is_public: bool
 
 
 class BaseProblem(BaseProblemWithoutCreator):
@@ -58,8 +59,8 @@ class GetProblemResponseSchema(BaseProblem, Descriptions):
 
 
 class GetProblemsRequestSchema(PaginationSchema, SortSchema):
-    title: Optional[str]
-    creator: Optional[str]
+    title: Optional[str] = None
+    creator: Optional[str] = None
     is_public: bool = False
 
 
@@ -75,6 +76,7 @@ class UpdateProblemRequestSchema(SerializeToModelSchema[Problem]):
     input_description: Optional[Description] = None
     output_description: Optional[Description] = None
     limit_description: Optional[Description] = None
+    is_public: Optional[bool] = None
 
     def serialize(self) -> Problem:
         problem = Problem()
@@ -99,6 +101,9 @@ class UpdateProblemRequestSchema(SerializeToModelSchema[Problem]):
 
         if self.limit_description is not None:
             problem.limit_description = self.limit_description
+
+        if self.is_public is not None:
+            problem.is_public = self.is_public
 
         return problem
 

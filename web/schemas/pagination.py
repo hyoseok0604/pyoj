@@ -1,11 +1,13 @@
+from typing import Annotated
+
 from pydantic import Field, computed_field
 
 from web.schemas.base import BaseSchema
 
 
 class PaginationSchema(BaseSchema):
-    page: int = Field(1, ge=1)
-    count: int = Field(20, ge=1, le=100)
+    page: Annotated[int, Field(ge=1)] = 1
+    count: Annotated[int, Field(ge=1, le=100)] = 20
 
     @computed_field
     @property
