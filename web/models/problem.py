@@ -45,6 +45,13 @@ class Testcase(BaseModel):
     __tablename__ = "testcase"
 
     id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
+    original_input_filename: Mapped[str]
+    original_output_filename: Mapped[str]
+    input_preview: Mapped[str] = mapped_column(server_default="")
+    output_preview: Mapped[str] = mapped_column(server_default="")
+    input_size: Mapped[int] = mapped_column(server_default="0")
+    output_size: Mapped[int] = mapped_column(server_default="0")
+
     problem_id: Mapped[int] = mapped_column(
         ForeignKey("problem.id", ondelete="CASCADE")
     )
