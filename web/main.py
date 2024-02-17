@@ -15,6 +15,8 @@ from web.routers.problem import api_router as problem_api_router
 from web.routers.user import api_router as user_api_router
 from web.services.exceptions import (
     AuthException,
+    FileTooLargeException,
+    InternalServerException,
     NotFoundException,
     PermissionException,
     ServiceException,
@@ -59,6 +61,10 @@ async def service_exception_handler(request: Request, exception: ServiceExceptio
         status_code = status.HTTP_403_FORBIDDEN
     elif isinstance(exception, NotFoundException):
         status_code = status.HTTP_404_NOT_FOUND
+    elif isinstance(exception, InternalServerException):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    elif isinstance(exception, FileTooLargeException):
+        status_code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
 
     return JSONResponse(exception.messages, status_code=status_code)
 
