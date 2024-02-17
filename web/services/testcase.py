@@ -113,12 +113,16 @@ class TestcaseService:
             .offset(schema.offset)
         )
 
+        order_by = None
         if schema.order_by == "id":
             order_by = Testcase.id
         elif schema.order_by == "input_size":
             order_by = Testcase.input_size
         elif schema.order_by == "output_size":
             order_by = Testcase.output_size
+
+        if order_by is None:  # progma: no cover
+            raise ServiceException()
 
         if schema.sort == "asc":
             stmt = stmt.order_by(order_by.asc())

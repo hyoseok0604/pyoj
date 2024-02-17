@@ -39,9 +39,10 @@ class FileService:
             output_file, testcase_path / f"{testcase_id}.out"
         )
 
-        if (is_input_large := input_size > self.TEST_CASE_FILE_SIZE_LIMIT) or (
-            is_output_large := output_size > self.TEST_CASE_FILE_SIZE_LIMIT
-        ):
+        is_input_large = input_size > self.TEST_CASE_FILE_SIZE_LIMIT
+        is_output_large = output_size > self.TEST_CASE_FILE_SIZE_LIMIT
+
+        if is_input_large or is_output_large:
             self.delete_testcase_file(problem_id, testcase_id)
             raise TestcaseFileTooLargeException(is_input_large, is_output_large)
 
