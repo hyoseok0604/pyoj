@@ -62,7 +62,7 @@ jobs:
       - name: Test judger with pytest
         run: ./scripts/test-judger.sh
       - name: Create Test Path
-        run: mkdir /judge_file
+        run: mkdir ./judge_file
       - name: Test with pytest
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -70,7 +70,7 @@ jobs:
           REDIS_URI: redis://localhost:6379/0
           RABBITMQ_URI: amqp://guest:guest@localhost:5672/
           SESSION_KEY: key
-          JUDGE_FILE_PATH: /judge_file
+          JUDGE_FILE_PATH: ${{ github.workspace }}/judge_file
         run: poetry run pytest --junitxml=junit/test-results.xml --ignore=judger
       - name: Upload test results
         uses: actions/upload-artifact@v3
