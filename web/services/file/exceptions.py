@@ -14,6 +14,8 @@ class TestcaseFileTooLargeException(FileTooLargeException):
         messages = {}
 
         if input:
-            messages.update({"input": "입력 파일의 크기가 너무 큽니다."})
+            messages.update({"input_file": "입력 파일의 크기가 너무 큽니다."})
         if output:
-            messages.update({"output": "출력 파일의 크기가 너무 큽니다."})
+            messages.update({"output_file": "출력 파일의 크기가 너무 큽니다."})
+
+        super().__init__(messages)
