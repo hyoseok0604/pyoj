@@ -89,6 +89,7 @@ class TestcaseService:
         await self.session.merge(testcase)
 
         await self.session.commit()
+        await self.session.refresh(testcase)
 
         return testcase
 
@@ -142,7 +143,7 @@ class TestcaseService:
         elif schema.order_by == "output_size":
             order_by = Testcase.output_size
 
-        if order_by is None:  # progma: no cover
+        if order_by is None:  # pragma: no cover
             raise ServiceException()
 
         if schema.sort == "asc":
