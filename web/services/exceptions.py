@@ -1,13 +1,28 @@
 class ServiceException(Exception):
     messages: dict[str, str] = {}
 
+    def __init__(self, messages: dict[str, str] | None = None) -> None:
+        self.messages = messages if messages is not None else self.messages
+
 
 class AuthException(ServiceException):
     ...
 
 
+class NotFoundException(ServiceException):
+    messages = {"_details": "존재하지 않는 리소스입니다."}
+
+
 class PermissionException(ServiceException):
     messages = {"_details": "권한이 없습니다."}
+
+
+class InternalServerException(ServiceException):
+    ...
+
+
+class FileTooLargeException(ServiceException):
+    ...
 
 
 class LoginRequiredException(AuthException):

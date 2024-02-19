@@ -33,3 +33,8 @@ class SerializeToModelSchema(BaseSchema, Generic[T]):
             warnings: bool = True,
         ) -> T:
             ...
+
+
+class Creator(BaseSchema):
+    id: int
+    username: str

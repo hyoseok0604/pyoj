@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, TypedDict
 
 import pytest
 from asgi_lifespan import LifespanManager
@@ -121,14 +121,95 @@ async def client(savepoint_connection: AsyncConnection, life_span_app: FastAPI):
 
 
 @pytest.fixture
-async def create_user(client):
-    response = await client.post(
-        "/api/users",
-        json={
-            "username": "username",
-            "password1": "password",
-            "password2": "password",
-        },
-    )
+async def create_users(request, client):
+    try:
+        count = request.param.get("count")
+    except AttributeError:
+        count = 1
 
-    return response.json()
+    users = [
+        {"username": f"username{i}", "password": f"password{i}"} for i in range(count)
+    ]
+
+    for user in users:
+        response = await client.post(
+            "/api/users",
+            json={
+                "username": user["username"],
+                "password1": user["password"],
+                "password2": user["password"],
+            },
+        )
+
+        user.update({"id": response.json().get("id")})
+
+    return users
+
+
+@pytest.fixture
+async def login(client: AsyncClient, create_users):
+    async def _login(idx: int):
+        assert idx < len(create_users)
+
+        request = await client.post(
+            "/api/login",
+            json={
+                "username": create_users[idx]["username"],
+                "password": create_users[idx]["password"],
+            },
+        )
+
+        assert request.status_code == 204
+
+    return _login
+
+
+@pytest.fixture
+async def logout(client: AsyncClient):
+    async def _logout():
+        await client.post("/api/logout")
+
+    return _logout
+
+
+class FixtureProblem(TypedDict):
+    id: int
+    title: str
+    time_limit: int
+    memory_limit: int
+    description: str
+    input_description: str
+    output_description: str
+    limit_description: str
+
+
+@pytest.fixture
+async def create_problems(request, client, login, logout, create_users):
+    try:
+        creators = request.param.get("creators")
+    except AttributeError:
+        return []
+
+    problems: list[FixtureProblem] = [
+        {
+            "id": -1,
+            "title": f"title{i}",
+            "time_limit": 1000,
+            "memory_limit": 256,
+            "description": f"description{i}",
+            "input_description": f"input_description{i}",
+            "output_description": f"output_description{i}",
+            "limit_description": f"limit_description{i}",
+        }
+        for i in range(len(creators))
+    ]
+
+    for problem, creator in zip(problems, creators):
+        await login(creator)
+
+        response = await client.post("/api/problems", json=problem)
+        problem["id"] = response.json().get("id")
+
+    await logout()
+
+    return problems

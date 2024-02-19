@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     redis_uri: RedisDsn
     rabbitmq_uri: AmqpDsn
     session_key: SecretStr
+    judge_file_path: str
 
     env: str = "production"
 

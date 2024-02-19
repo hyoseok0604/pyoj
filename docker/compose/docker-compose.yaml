@@ -9,11 +9,18 @@ services:
       context: .
       dockerfile: docker/web/Dockerfile
     restart: unless-stopped
+    volumes:
+      - judge_file:/judge_file:rw
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          size: "33554432"
     environment:
       - POSTGRES_URI=postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE}
       - REDIS_URI=redis://:${REDIS_PASSWORD}@redis:6379/0
       - RABBITMQ_URI=amqp://rabbitmq:${RABBITMQ_PASSWORD}@rabbitmq:5672/
       - SESSION_KEY=${SESSION_KEY}
+      - JUDGE_FILE_PATH=/judge_file
     expose:
       - 8080
     depends_on:
@@ -30,14 +37,15 @@ services:
       dockerfile: docker/worker/Dockerfile
     cgroup_parent: pyoj.slice
     privileged: true
-    # volumes:
-    #   - /sys/fs/cgroup/pyoj.slice:/sys/fs/cgroup:rw
+    volumes:
+      - judge_file:/judge_file:rw
     restart: unless-stopped
     environment:
       - POSTGRES_URI=postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE}
       - REDIS_URI=redis://:${REDIS_PASSWORD}@redis:6379/0
       - RABBITMQ_URI=amqp://rabbitmq:${RABBITMQ_PASSWORD}@rabbitmq:5672/
       - SESSION_KEY=${SESSION_KEY}
+      - JUDGE_FILE_PATH=/judge_file
     cap_add:
       - SYS_ADMIN
     healthcheck:
@@ -121,3 +129,4 @@ volumes:
   rabbitmq_log:
   caddy_data:
   caddy_config:
+  judge_file:
