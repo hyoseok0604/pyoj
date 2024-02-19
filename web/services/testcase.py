@@ -7,9 +7,13 @@ from web.core.database import AsyncSessionDependency
 from web.core.decorators import as_annotated_dependency
 from web.core.settings import settings
 from web.models.problem import Testcase
+from web.models.user import SessionUser
 from web.schemas.testcase import GetTestcasesRequestSchema
 from web.services.exceptions import (
+    InternalServerException,
+    LoginRequiredException,
     NotFoundException,
+    PermissionException,
     ServiceException,
 )
 from web.services.file import FileService
@@ -36,11 +40,18 @@ class TestcaseService:
         output_filename: str | None,
         input_file: SpooledTemporaryFile[bytes],
         output_file: SpooledTemporaryFile[bytes],
+        session_user: SessionUser | None,
     ):
+        if session_user is None:
+            raise LoginRequiredException()
+
         problem = await self.problem_service.get_problem_by_id(id)
 
         if problem is None:
             raise NotFoundException()
+
+        if problem.creator_id != session_user.user_id:
+            raise PermissionException()
 
         testcase = Testcase()
         testcase.problem = problem
@@ -62,10 +73,14 @@ class TestcaseService:
             )
             testcase.input_size = input_size
             testcase.output_size = output_size
+        except ServiceException as e:
+            await self.session.rollback()
+
+            raise e
         except Exception as e:
             await self.session.rollback()
 
-            raise ServiceException(
+            raise InternalServerException(
                 {"_details": "테스트 케이스 작성 중 오류가 발생했습니다."}
             ) from e
 
@@ -132,3 +147,17 @@ class TestcaseService:
         testcases = (await self.session.scalars(stmt)).all()
 
         return testcases
+
+    async def delete_testcase(self, id: int, session_user: SessionUser | None):
+        if session_user is None:
+            raise LoginRequiredException()
+
+        testcase = await self.get_testcase(id)
+
+        if session_user.user_id != testcase.problem.creator_id:
+            raise PermissionException()
+
+        self.judge_file_service.delete_testcase_file(testcase.problem_id, id)
+
+        await self.session.delete(testcase)
+        await self.session.commit()
