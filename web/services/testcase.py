@@ -110,8 +110,14 @@ class TestcaseService:
 
         return b"\n".join(preview)
 
-    async def get_testcase(self, id: int):
-        testcase = await self.session.get(Testcase, id)
+    async def get_testcase(self, testcase_id: int, problem_id: int):
+        stmt = (
+            select(Testcase)
+            .where(Testcase.id == testcase_id)
+            .where(Testcase.problem_id == problem_id)
+        )
+
+        testcase = await self.session.scalar(stmt)
 
         if testcase is None:
             raise NotFoundException()
@@ -148,16 +154,18 @@ class TestcaseService:
 
         return testcases
 
-    async def delete_testcase(self, id: int, session_user: SessionUser | None):
+    async def delete_testcase(
+        self, testcase_id: int, problem_id: int, session_user: SessionUser | None
+    ):
         if session_user is None:
             raise LoginRequiredException()
 
-        testcase = await self.get_testcase(id)
+        testcase = await self.get_testcase(testcase_id, problem_id)
 
         if session_user.user_id != testcase.problem.creator_id:
             raise PermissionException()
 
-        self.judge_file_service.delete_testcase_file(testcase.problem_id, id)
+        self.judge_file_service.delete_testcase_file(testcase.problem_id, testcase_id)
 
         await self.session.delete(testcase)
         await self.session.commit()
