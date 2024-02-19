@@ -101,6 +101,7 @@ async def create_problem_testcase_api(
     input_file: UploadFile,
     output_file: UploadFile,
     service: TestcaseService,
+    user: SessionUserDependency,
 ):
     testcase = await service.create_testcase(
         id,
@@ -108,6 +109,7 @@ async def create_problem_testcase_api(
         output_file.filename,
         cast(SpooledTemporaryFile[bytes], input_file.file),
         cast(SpooledTemporaryFile[bytes], output_file.file),
+        user,
     )
 
     return testcase
@@ -141,7 +143,7 @@ async def get_problem_testcase_api(
     testcase_service: TestcaseService,
     judge_file_service: FileService,
 ):
-    testcase = await testcase_service.get_testcase(testcase_id)
+    testcase = await testcase_service.get_testcase(testcase_id, problem_id)
     input, output = judge_file_service.read_testcase_file(problem_id, testcase_id)
 
     return {
@@ -150,3 +152,13 @@ async def get_problem_testcase_api(
         "input": input,
         "output": output,
     }
+
+
+@api_router.delete("/{problem_id}/testcases/{testcase_id}")
+async def delete_problem_testcase_api(
+    problem_id: int,
+    testcase_id: int,
+    testcase_service: TestcaseService,
+    user: SessionUserDependency,
+):
+    await testcase_service.delete_testcase(testcase_id, problem_id, user)
