@@ -1,8 +1,8 @@
 import re
-from typing import NamedTuple
+from typing import TypedDict
 
 
-class Systemcall(NamedTuple):
+class Systemcall(TypedDict):
     name: str
     number: int
 
