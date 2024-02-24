@@ -21,23 +21,22 @@ def parse_systemcalls():
     with DatabaseSession() as session:
         enabled_systemcall_group = _get_enabled_systemcall_group(session)
 
-        if enabled_systemcall_group is None:
-            _log.info("Create new systemcall group with enable.")
-            _create_systemcall_group(session, parsed_systemcalls, True)
-        elif not _is_same_systemcalls(
+        if enabled_systemcall_group is None or not _is_same_systemcalls(
             enabled_systemcall_group.systemcalls, parsed_systemcalls
         ):
-            _log.info(
-                "New systemcall parsed. Create new systemcall group without enable."
+            _log.info("New systemcall parsed, save systemcall group.")
+            _create_systemcall_group(
+                session, parsed_systemcalls, enabled_systemcall_group
             )
-            _create_systemcall_group(session, parsed_systemcalls, False)
         else:
-            _log.info("Same systemcall parsed. Not save.")
+            _log.info("Same systemcall parsed, not save.")
 
 
 def _get_enabled_systemcall_group(session: Session) -> SystemcallGroup | None:
-    enabled_systemcall_group_stmt = select(SystemcallGroup).where(
-        SystemcallGroup.is_enabled.is_(True)
+    enabled_systemcall_group_stmt = (
+        select(SystemcallGroup)
+        .where(SystemcallGroup.is_enabled.is_(True))
+        .with_for_update()
     )
     return session.scalar(enabled_systemcall_group_stmt)
 
@@ -45,7 +44,7 @@ def _get_enabled_systemcall_group(session: Session) -> SystemcallGroup | None:
 def _create_systemcall_group(
     session: Session,
     judger_systemcalls: list[JudgerSystemcall],
-    enabled: bool,
+    enabled_systemcall_group: SystemcallGroup | None,
 ):
     systemcalls = [
         DatabaseSystemcall(name=systemcall["name"], number=systemcall["number"])
@@ -54,7 +53,11 @@ def _create_systemcall_group(
 
     systemcall_group = SystemcallGroup()
     systemcall_group.systemcalls = systemcalls
-    systemcall_group.is_enabled = enabled
+    systemcall_group.is_enabled = True
+
+    if enabled_systemcall_group is not None:
+        enabled_systemcall_group.is_enabled = False
+        session.merge(enabled_systemcall_group)
 
     session.add(systemcall_group)
     session.commit()
