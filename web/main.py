@@ -12,6 +12,7 @@ from web.core.migration import migration
 from web.models.base import BaseModel
 from web.routers.auth import api_router as auth_api_router
 from web.routers.problem import api_router as problem_api_router
+from web.routers.systemcall import api_router as systemcall_api_router
 from web.routers.user import api_router as user_api_router
 from web.services.exceptions import (
     AuthException,
@@ -42,7 +43,12 @@ view_router = APIRouter()
 
 api_router = APIRouter(prefix="/api")
 
-api_routers: list[APIRouter] = [user_api_router, auth_api_router, problem_api_router]
+api_routers: list[APIRouter] = [
+    user_api_router,
+    auth_api_router,
+    problem_api_router,
+    systemcall_api_router,
+]
 
 for router in api_routers:
     api_router.include_router(router)
