@@ -23,6 +23,7 @@ class SystemcallService:
             .offset(schema.offset)
             .join(SystemcallGroup.systemcalls)
             .group_by(SystemcallGroup.id)
+            .order_by(SystemcallGroup.id.desc())
         )
 
         systemcall_groups_with_count = (await self.session.execute(stmt)).tuples().all()
