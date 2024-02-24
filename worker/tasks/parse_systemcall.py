@@ -63,25 +63,27 @@ def _create_systemcall_group(
     session.commit()
 
 
-def _is_same_systemcalls(orig: list[DatabaseSystemcall], new: list[JudgerSystemcall]):
-    orig_index = 0
-    new_index = 0
+def _is_same_systemcalls(
+    original_systemcalls: list[DatabaseSystemcall],
+    new_systemcalls: list[JudgerSystemcall],
+):
+    if len(original_systemcalls) != len(new_systemcalls):
+        return False
 
-    sorted_orig = sorted(orig, key=lambda systemcall: systemcall.number)
-    sorted_new = sorted(new, key=lambda systemcall: systemcall["number"])
+    sorted_original_systemcalls = sorted(
+        original_systemcalls, key=lambda systemcall: systemcall.number
+    )
+    sorted_new_systemcalls = sorted(
+        new_systemcalls, key=lambda systemcall: systemcall["number"]
+    )
 
-    while orig_index < len(orig) and new_index < len(new):
-        if sorted_orig[orig_index].number < sorted_new[new_index]["number"]:
-            orig_index += 1
-            continue
-        if sorted_orig[orig_index].number > sorted_new[new_index]["number"]:
-            new_index += 1
-            continue
-
-        if sorted_orig[orig_index].name != sorted_new[new_index]["name"]:
+    for original_systmecall, new_systemcall in zip(
+        sorted_original_systemcalls, sorted_new_systemcalls
+    ):
+        if original_systmecall.number != new_systemcall["number"]:
             return False
 
-        orig_index += 1
-        new_index += 1
+        if original_systmecall.name != new_systemcall["name"]:
+            return False
 
-    return orig_index == len(orig) and new_index == len(new)
+    return True
