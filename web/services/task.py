@@ -9,4 +9,4 @@ class TaskService:
         self.redis = redis
 
     def request_parse_systemcall_task(self):
-        parse_systemcalls_task.delay()
+        parse_systemcalls_task.delay()  # type: ignore
