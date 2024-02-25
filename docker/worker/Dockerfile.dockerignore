@@ -5,4 +5,5 @@ ignore_worker.txt
 .ruff_cache
 .vscode
 web
+!web/models/**
 templates
