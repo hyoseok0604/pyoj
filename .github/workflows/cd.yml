@@ -35,6 +35,8 @@ jobs:
         with:
           files_yaml: |
             shared:
+              - judger/**
+              - worker/**
               - docker/compose/**
               - poetry.lock
               - pyproject.toml
@@ -43,7 +45,7 @@ jobs:
               - web/**
             worker:
               - docker/worker/**
-              - worker/**
+              - web/models/**
       - name: Build, tag, and push docker image to Amazon ECR (Worker)
         if: ${{ (steps.changed-files.outputs.shared_any_changed == 'true') || (steps.changed-files.outputs.worker_any_changed == 'true') }}
         env:

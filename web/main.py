@@ -3,14 +3,12 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import APIRouter, FastAPI, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 from uvicorn.config import LOGGING_CONFIG
 
 from web.core import settings
-from web.core.database import async_session
-from web.core.migration import migration
-from web.models.base import BaseModel
+from web.core.startup import startup_functions
 from web.routers.auth import api_router as auth_api_router
+from web.routers.language import api_router as language_api_router
 from web.routers.problem import api_router as problem_api_router
 from web.routers.systemcall import api_router as systemcall_api_router
 from web.routers.user import api_router as user_api_router
@@ -26,13 +24,8 @@ from web.services.exceptions import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with async_session() as session:
-
-        def wrapped_migration(session: Session):
-            migration(session.connection(), BaseModel.metadata)
-
-        await session.run_sync(wrapped_migration)
-        await session.commit()
+    for startup_function in startup_functions:
+        await startup_function()
 
     yield
 
@@ -48,6 +41,7 @@ api_routers: list[APIRouter] = [
     auth_api_router,
     problem_api_router,
     systemcall_api_router,
+    language_api_router,
 ]
 
 for router in api_routers:
