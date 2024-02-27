@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar
 
 from pydantic import BaseModel as Schema
 from pydantic import ConfigDict, model_serializer
+from pydantic import RootModel as RootSchema  # noqa: F401
 
 from web.models import BaseModel
 

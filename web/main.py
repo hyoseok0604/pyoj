@@ -8,6 +8,7 @@ from uvicorn.config import LOGGING_CONFIG
 from web.core import settings
 from web.core.startup import startup_functions
 from web.routers.auth import api_router as auth_api_router
+from web.routers.language import api_router as language_api_router
 from web.routers.problem import api_router as problem_api_router
 from web.routers.systemcall import api_router as systemcall_api_router
 from web.routers.user import api_router as user_api_router
@@ -40,6 +41,7 @@ api_routers: list[APIRouter] = [
     auth_api_router,
     problem_api_router,
     systemcall_api_router,
+    language_api_router,
 ]
 
 for router in api_routers:

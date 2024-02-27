@@ -1,3 +1,4 @@
+from sqlalchemy import sql
 from sqlalchemy.orm import Mapped, mapped_column
 
 from web.models.base import BaseModel
@@ -11,3 +12,4 @@ class Language(BaseModel):
     filename: Mapped[str]
     compile_command: Mapped[str]
     execute_command: Mapped[str]
+    is_enabled: Mapped[bool] = mapped_column(server_default=sql.true())
