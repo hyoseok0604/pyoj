@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from web.models.base import BaseModel
 
 if TYPE_CHECKING:
+    from web.models.submission import Submission
     from web.models.user import User
 
 
@@ -39,6 +40,8 @@ class Problem(BaseModel):
     creator_id: Mapped[int | None] = mapped_column(
         ForeignKey("user.id", ondelete="SET NULL")
     )
+
+    submissions: Mapped[list["Submission"]] = relationship(back_populates="problem")
 
 
 class Testcase(BaseModel):
