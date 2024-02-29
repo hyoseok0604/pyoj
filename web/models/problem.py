@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from web.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from web.models.submission import Submission
+    from web.models.submission import Submission, SubmissionTestcaseResult
     from web.models.user import User
 
 
@@ -59,3 +59,7 @@ class Testcase(BaseModel):
         ForeignKey("problem.id", ondelete="CASCADE")
     )
     problem: Mapped["Problem"] = relationship(back_populates="testcases")
+
+    submission_results: Mapped[list["SubmissionTestcaseResult"]] = relationship(
+        back_populates="testcase"
+    )

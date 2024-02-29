@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from web.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from web.models.submission import Submission
+    from web.models.submission import SubmissionTestcaseResult
 
 
 class Systemcall(BaseModel):
@@ -29,17 +29,19 @@ class Systemcall(BaseModel):
 class SystemcallCount(BaseModel):
     __tablename__ = "systemcall_count"
 
+    count: Mapped[int]
+
     systemcall_id: Mapped[int] = mapped_column(
         ForeignKey("systemcall.id"), primary_key=True
     )
     systemcall: Mapped[Systemcall] = relationship(back_populates="systemcall_counts")
 
-    submission_id: Mapped[int] = mapped_column(
-        ForeignKey("submission.id"), primary_key=True
+    submission_result_id: Mapped[int] = mapped_column(
+        ForeignKey("submission_testcase_result.id")
     )
-    submission: Mapped["Submission"] = relationship(back_populates="systemcall_counts")
-
-    count: Mapped[int]
+    submission_result: Mapped["SubmissionTestcaseResult"] = relationship(
+        back_populates="systemcall_counts"
+    )
 
 
 class SystemcallGroup(BaseModel):
