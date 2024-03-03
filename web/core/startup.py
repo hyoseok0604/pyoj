@@ -1,9 +1,12 @@
+from fastapi import FastAPI
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from judger.language import languages as judger_languages
 from web.core.database import async_session
 from web.core.migration import migration
+from web.core.pg_notify_listen import PostgresAsyncNotifyListener
+from web.core.settings import settings
 from web.logger import (
     DisableSqlalchemyLogger,
     _log,
@@ -12,7 +15,7 @@ from web.models.base import BaseModel
 from web.models.language import Language
 
 
-async def startup_migration():
+async def startup_migration(app: FastAPI):
     with DisableSqlalchemyLogger():
         async with async_session() as session:
 
@@ -23,7 +26,7 @@ async def startup_migration():
             await session.commit()
 
 
-async def startup_language_migration():
+async def startup_language_migration(app: FastAPI):
     with DisableSqlalchemyLogger():
         async with async_session() as session:
             _log.info(f"{len(judger_languages)} languages detected.")
@@ -66,4 +69,18 @@ async def startup_language_migration():
             await session.commit()
 
 
-startup_functions = [startup_migration, startup_language_migration]
+async def startup_pg_notify_listen(app: FastAPI):
+    pg_notify_listener = PostgresAsyncNotifyListener(
+        str(settings.postgres_uri).replace("+psycopg", "", 1)
+    )
+
+    await pg_notify_listener.start()
+
+    app.state.pg_notify_listener = pg_notify_listener
+
+
+startup_functions = [
+    startup_migration,
+    startup_language_migration,
+    startup_pg_notify_listen,
+]
