@@ -18,18 +18,22 @@ EnumOp = CreateEnumOp | DropEnumOp | SyncEnumValuesOp
 
 
 def is_latest(connection: Connection, metadata: MetaData) -> bool:
-    migration_context = MigrationContext.configure(connection, opts={"fn": _nothing})
+    migration_context = MigrationContext.configure(
+        connection, opts={"fn": _nothing, "include_schemas": False}
+    )
     migration_script = produce_migrations(context=migration_context, metadata=metadata)
     upgrade_ops = migration_script.upgrade_ops
 
-    if upgrade_ops is None:
+    if upgrade_ops is None:  # pragma: no cover
         return False
 
     return len(upgrade_ops.ops) == 0
 
 
 def migration(connection: Connection, metadata: MetaData):
-    migration_context = MigrationContext.configure(connection, opts={"fn": _nothing})
+    migration_context = MigrationContext.configure(
+        connection, opts={"fn": _nothing, "include_schemas": False}
+    )
     migration_script = produce_migrations(context=migration_context, metadata=metadata)
     upgrade_ops = migration_script.upgrade_ops
 
@@ -83,7 +87,13 @@ def _run_enum_operations(
             enum = Enum(*op.enum_values, name=op.name)
         enum.drop(ops.get_bind())
     elif isinstance(op, SyncEnumValuesOp):
-        ops.invoke(op)
+        ops.sync_enum_values(  # type: ignore[reportAttributeAccessIssue]
+            op.schema,
+            op.name,
+            op.new_values,
+            op.affected_columns,
+            enum_values_to_rename=[],
+        )
     else:
         nv: Never = op  # noqa: F841
 
