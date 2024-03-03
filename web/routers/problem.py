@@ -19,7 +19,6 @@ from web.schemas.testcase import (
     GetTestcasesRequestSchema,
     GetTestcasesResponseSchema,
 )
-from web.services.file import FileService
 from web.services.problem import ProblemService
 from web.services.testcase import TestcaseService
 
@@ -141,17 +140,10 @@ async def get_problem_testcase_api(
     problem_id: int,
     testcase_id: int,
     testcase_service: TestcaseService,
-    judge_file_service: FileService,
 ):
     testcase = await testcase_service.get_testcase(testcase_id, problem_id)
-    input, output = judge_file_service.read_testcase_file(problem_id, testcase_id)
 
-    return {
-        "id": testcase.id,
-        "problem_id": testcase.problem_id,
-        "input": input,
-        "output": output,
-    }
+    return testcase
 
 
 @api_router.delete("/{problem_id}/testcases/{testcase_id}")

@@ -10,6 +10,7 @@ from web.core.startup import startup_functions
 from web.routers.auth import api_router as auth_api_router
 from web.routers.language import api_router as language_api_router
 from web.routers.problem import api_router as problem_api_router
+from web.routers.submission import api_router as submission_api_router
 from web.routers.systemcall import api_router as systemcall_api_router
 from web.routers.user import api_router as user_api_router
 from web.services.exceptions import (
@@ -25,7 +26,7 @@ from web.services.exceptions import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     for startup_function in startup_functions:
-        await startup_function()
+        await startup_function(app)
 
     yield
 
@@ -42,6 +43,7 @@ api_routers: list[APIRouter] = [
     problem_api_router,
     systemcall_api_router,
     language_api_router,
+    submission_api_router,
 ]
 
 for router in api_routers:
