@@ -27,10 +27,11 @@ def execute(
     execute_command: str,
     stdin_filename: str,
     stdout_filename: str,
+    stderr_filename: str,
     time_limit: int,
     memory_limit: int,
     output_limit: int,
-    is_syscall_allowed: dict[int, bool],
+    systemcall_count_limits: dict[int, int],
 ):
     try:
         os.chdir(working_directory)
@@ -41,16 +42,22 @@ def execute(
 
     if pid == 0:
         _execute_child(
-            execute_command, stdin_filename, stdout_filename, time_limit, output_limit
+            execute_command,
+            stdin_filename,
+            stdout_filename,
+            stderr_filename,
+            time_limit,
+            output_limit,
         )
     else:
-        return _execute_parent(pid, time_limit, memory_limit, is_syscall_allowed)
+        return _execute_parent(pid, time_limit, memory_limit, systemcall_count_limits)
 
 
 def _execute_child(
     execute_command: str,
     stdin_filename: str,
     stdout_filename: str,
+    stderr_filename: str,
     time_limit: int,
     output_limit: int,
 ) -> Never:
@@ -67,7 +74,11 @@ def _execute_child(
     os.dup2(fdout, STDOUT_FILENO)
     os.close(fdout)
 
-    fderr = os.open(os.devnull, os.O_WRONLY)
+    fderr = os.open(
+        stderr_filename,
+        os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+        stat.S_IWUSR | stat.S_IRUSR,
+    )
     os.dup2(fderr, STDERR_FILENO)
     os.close(fderr)
 
@@ -85,11 +96,15 @@ def _execute_child(
 
 
 def _execute_parent(
-    pid: int, time_limit: int, memory_limit: int, is_syscall_allowed: dict[int, bool]
+    pid: int,
+    time_limit: int,
+    memory_limit: int,
+    systemcall_count_limits: dict[int, int],
 ):
     result: ExecuteResult | None = None
     time = 0
     memory = 0
+    syscall_counts = {number: 0 for number, _ in systemcall_count_limits.items()}
 
     _handle_execve_under_ptrace(pid)
 
@@ -128,16 +143,21 @@ def _execute_parent(
                     if syscall_info.op == 1:
                         syscall_number = syscall_info.entry.nr
 
-                        if syscall_number not in is_syscall_allowed:
+                        if syscall_number not in systemcall_count_limits:
                             result = ExecuteResult.UNKNOWN_SYSCALL
                             _log.info(
                                 "Unable to check "
                                 f"if system call({syscall_number}) is allowed."
                             )
 
-                        if not is_syscall_allowed[syscall_number]:
+                        if systemcall_count_limits[syscall_number] == 0:
                             result = ExecuteResult.NOT_ALLOWED_SYSCALL
-                            _log.info(f"System call({syscall_number}) is not allowed.")
+                            _log.info(
+                                f"System call({syscall_number}) limit has been reached."
+                            )
+
+                        syscall_counts[syscall_number] += 1
+                        systemcall_count_limits[syscall_number] -= 1
 
                 elif status >> 8 == (
                     signal.SIGTRAP | PtraceEvents.PTRACE_EVENT_EXIT << 8
@@ -166,7 +186,7 @@ def _execute_parent(
 
             ptrace_syscall(pid)
 
-    return result, time, memory
+    return result, time, memory, syscall_counts
 
 
 def _handle_execve_under_ptrace(pid: int):
