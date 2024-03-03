@@ -50,7 +50,7 @@ class SubmissionTestcaseResult(BaseModel):
     id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
 
     time: Mapped[Optional[int]] = mapped_column(default=None)
-    memory: Mapped[Optional[int]] = mapped_column(default=True)
+    memory: Mapped[Optional[int]] = mapped_column(default=None)
 
     result: Mapped[Optional[ExecuteResult]] = mapped_column(default=None)
 
