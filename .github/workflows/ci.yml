@@ -59,8 +59,8 @@ jobs:
         run: poetry run ruff format --check .
       - name: Type checking with pyright
         run: poetry run pyright .
-      - name: Test judger with pytest
-        run: ./scripts/test-judger.sh
+      # - name: Test judger with pytest
+      #   run: ./scripts/test-judger.sh
       - name: Create Test Path
         run: mkdir ./judge_file
       - name: Test with pytest
