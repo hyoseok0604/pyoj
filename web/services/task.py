@@ -26,7 +26,7 @@ class TaskService:
             compile_submission_task.si(submission.id),  # type: ignore
             group(
                 [
-                    execute_testcase_task.si(submission.id, testcase_id)
+                    execute_testcase_task.si(submission.id, testcase_id)  # type: ignore
                     for testcase_id in testcase_ids
                 ]
             ),  # type: ignore
