@@ -29,6 +29,8 @@ alembic = "^1.13.1"
 alembic-postgresql-enum = "^1.0.2"
 bcrypt = "^4.1.2"
 python-multipart = "^0.0.9"
+alembic-utils = "^0.8.2"
+sse-starlette = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]
