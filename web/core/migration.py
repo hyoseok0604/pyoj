@@ -1,4 +1,4 @@
-from typing import Never, Sequence, TypeGuard, cast, get_args
+from typing import Sequence, TypeGuard, cast, get_args
 
 import alembic_postgresql_enum  # noqa: F401
 from alembic.autogenerate import produce_migrations
@@ -10,7 +10,7 @@ from alembic_postgresql_enum.operations import (
     DropEnumOp,
     SyncEnumValuesOp,
 )
-from sqlalchemy import Connection, Enum, MetaData
+from sqlalchemy import Connection, MetaData
 
 from web.logger import _log
 
@@ -74,28 +74,29 @@ def _run_operations_recursive(
 def _run_enum_operations(
     migration_context: MigrationContext, ops: Operations, op: EnumOp
 ):
-    if isinstance(op, CreateEnumOp):
-        if op.schema != migration_context.dialect.default_schema_name:
-            enum = Enum(*op.enum_values, name=op.name, schema=op.schema)
-        else:
-            enum = Enum(*op.enum_values, name=op.name)
-        enum.create(ops.get_bind())
-    elif isinstance(op, DropEnumOp):
-        if op.schema != migration_context.dialect.default_schema_name:
-            enum = Enum(*op.enum_values, name=op.name, schema=op.schema)
-        else:
-            enum = Enum(*op.enum_values, name=op.name)
-        enum.drop(ops.get_bind())
-    elif isinstance(op, SyncEnumValuesOp):
-        ops.sync_enum_values(  # type: ignore[reportAttributeAccessIssue]
-            op.schema,
-            op.name,
-            op.new_values,
-            op.affected_columns,
-            enum_values_to_rename=[],
-        )
-    else:
-        nv: Never = op  # noqa: F841
+    # if isinstance(op, CreateEnumOp):
+    #     if op.schema != migration_context.dialect.default_schema_name:
+    #         enum = Enum(*op.enum_values, name=op.name, schema=op.schema)
+    #     else:
+    #         enum = Enum(*op.enum_values, name=op.name)
+    #     enum.create(ops.get_bind())
+    # elif isinstance(op, DropEnumOp):
+    #     if op.schema != migration_context.dialect.default_schema_name:
+    #         enum = Enum(*op.enum_values, name=op.name, schema=op.schema)
+    #     else:
+    #         enum = Enum(*op.enum_values, name=op.name)
+    #     enum.drop(ops.get_bind())
+    # elif isinstance(op, SyncEnumValuesOp):
+    #     ops.sync_enum_values(  # type: ignore[reportAttributeAccessIssue]
+    #         op.schema,
+    #         op.name,
+    #         op.new_values,
+    #         op.affected_columns,
+    #         enum_values_to_rename=[],
+    #     )
+    # else:
+    #     nv: Never = op  # noqa: F841
+    ...
 
 
 def _nothing(rev, context):

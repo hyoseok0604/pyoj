@@ -28,7 +28,6 @@ async def startup_migration(app: FastAPI):
                 migration(session.connection(), BaseModel.metadata)
 
             await session.run_sync(wrapped_migration)
-            await session.commit()
 
             register_entities(
                 [
