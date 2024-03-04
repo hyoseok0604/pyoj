@@ -3,7 +3,7 @@ from typing import AsyncGenerator, TypedDict
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import Engine, MetaData, create_engine
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Session
@@ -94,7 +94,8 @@ async def client(savepoint_connection: AsyncConnection, life_span_app: FastAPI):
             ] = get_test_async_session
 
             async with AsyncClient(
-                app=life_span_app, base_url="http://localhost:8080"
+                transport=ASGITransport(app=life_span_app),  # type: ignore
+                base_url="http://localhost:8080",
             ) as client:
                 yield client
 
