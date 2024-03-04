@@ -7,8 +7,6 @@ from alembic_utils.pg_trigger import PGTrigger
 from alembic_utils.replaceable_entity import register_entities
 from psycopg import AsyncConnection, Notify, OperationalError
 
-from web.logger import _log
-
 notify_on_testcase_result_update_function = PGFunction.from_sql(
     """CREATE OR REPLACE FUNCTION public.notify_on_testcase_result_update_function() RETURNS TRIGGER AS $$
     DECLARE
@@ -81,7 +79,6 @@ class PostgresAsyncNotifyListener:
         await self.listen()
 
         asyncio.create_task(self.handle_notifies())
-        asyncio.create_task(self.update_and_remove_handler())
 
     async def connect(self):
         self.connection = await AsyncConnection.connect(
@@ -98,28 +95,11 @@ class PostgresAsyncNotifyListener:
                 for handler in self.handlers:
                     if handler.filter_fn(notify):
                         handler.queue.put_nowait(notify)
+                self.handlers = list(
+                    filter(lambda handler: not handler.need_remove, self.handlers)
+                )
         except OperationalError:
             ...
-
-    async def update_and_remove_handler(self):
-        while True:
-            _log.info(
-                f"Start update and remove handlers. Current handler count : {len(self.handlers)}"
-            )
-
-            await asyncio.gather(
-                *[handler.update_need_remove() for handler in self.handlers]
-            )
-
-            self.handlers = list(
-                filter(lambda handler: not handler.need_remove, self.handlers)
-            )
-
-            _log.info(
-                f"Updated handler count : {len(self.handlers)}, sleep 60 seconds."
-            )
-
-            await asyncio.sleep(60)
 
     def add_handler(self, handler: PostgresAsyncNotifyListenerHandler):
         self.handlers.append(handler)
