@@ -4,7 +4,6 @@ from typing import Callable
 
 from alembic_utils.pg_function import PGFunction
 from alembic_utils.pg_trigger import PGTrigger
-from alembic_utils.replaceable_entity import register_entities
 from psycopg import AsyncConnection, Notify, OperationalError
 
 notify_on_testcase_result_update_function = PGFunction.from_sql(
@@ -48,14 +47,6 @@ notify_on_testcase_result_update_trigger = PGTrigger.from_sql(
         ON submission_testcase_result
         FOR EACH ROW
         EXECUTE PROCEDURE notify_on_testcase_result_update_function();"""
-)
-
-
-register_entities(
-    [
-        notify_on_testcase_result_update_function,
-        notify_on_testcase_result_update_trigger,
-    ]
 )
 
 

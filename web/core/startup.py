@@ -1,3 +1,4 @@
+from alembic_utils.replaceable_entity import register_entities
 from fastapi import FastAPI
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -5,7 +6,11 @@ from sqlalchemy.orm import Session
 from judger.language import languages as judger_languages
 from web.core.database import async_session
 from web.core.migration import migration
-from web.core.pg_notify_listen import PostgresAsyncNotifyListener
+from web.core.pg_notify_listen import (
+    PostgresAsyncNotifyListener,
+    notify_on_testcase_result_update_function,
+    notify_on_testcase_result_update_trigger,
+)
 from web.core.settings import settings
 from web.logger import (
     DisableSqlalchemyLogger,
@@ -21,6 +26,16 @@ async def startup_migration(app: FastAPI):
 
             def wrapped_migration(session: Session):
                 migration(session.connection(), BaseModel.metadata)
+
+            await session.run_sync(wrapped_migration)
+            await session.commit()
+
+            register_entities(
+                [
+                    notify_on_testcase_result_update_function,
+                    notify_on_testcase_result_update_trigger,
+                ]
+            )
 
             await session.run_sync(wrapped_migration)
             await session.commit()
