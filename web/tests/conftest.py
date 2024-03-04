@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from typing import AsyncGenerator, TypedDict
 
 import pytest
@@ -11,7 +10,6 @@ from sqlalchemy.orm import DeclarativeBase, Session
 from starlette.responses import Response
 
 from web.core.database import async_engine, get_async_session
-from web.core.migration import migration
 from web.core.settings import settings
 from web.main import app
 from web.models import BaseModel
@@ -77,23 +75,6 @@ async def savepoint_connection():
 
 @pytest.fixture(scope="module")
 async def life_span_app(savepoint_connection: AsyncConnection):
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        async with savepoint_connection.begin() as transaction:
-            async with AsyncSession(bind=savepoint_connection) as session:
-
-                def wrapped_migration(session: Session):
-                    migration(session.connection(), BaseModel.metadata)
-
-                await session.run_sync(wrapped_migration)
-                await session.commit()
-
-            yield
-
-            await transaction.rollback()
-
-    app.router.lifespan_context = lifespan
-
     async with LifespanManager(app):
         yield app
 
