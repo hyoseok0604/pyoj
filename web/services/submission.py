@@ -31,7 +31,10 @@ class SubmissionService:
         await self.session.refresh(
             submission, attribute_names=["problem", "submission_results"]
         )
-        await self.session.refresh(submission.problem, attribute_names=["testcases"])
+        if submission.problem is not None:
+            await self.session.refresh(
+                submission.problem, attribute_names=["testcases"]
+            )
 
         if submission.problem is not None:
             submission.submission_results = [
