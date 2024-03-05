@@ -16,7 +16,10 @@ from worker.settings import settings
 def execute_testcase(submission_id: int, testcase_id: int):
     with DatabaseSession() as session:
         submission = _get_submission_or_reject(session=session, id=submission_id)
-        testcase = _get_testcase_or_reject(session=session, id=testcase_id)
+        if testcase_id != -1:
+            testcase = _get_testcase_or_reject(session=session, id=testcase_id)
+        else:
+            testcase = None
         systemcall_group = _get_systemcall_group_or_reject(session=session)
 
         root = pathlib.Path(settings.judge_file_path)
