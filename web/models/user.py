@@ -7,6 +7,7 @@ from web.models.base import BaseModel
 
 if TYPE_CHECKING:
     from web.models.problem import Problem
+    from web.models.submission import Submission
 
 USERNAME_UNIQUE_CONSTRAINT_NAME = "user_username_unique"
 SESEEION_KEY_UNIQUE_CONSTRAINT_NAME = "session_user_session_key_unique"
@@ -24,6 +25,7 @@ class User(BaseModel):
     password: Mapped[str] = mapped_column(deferred=True)
 
     problems: Mapped[list["Problem"]] = relationship(back_populates="creator")
+    submissions: Mapped[list["Submission"]] = relationship(back_populates="creator")
 
 
 class SessionUser(BaseModel):

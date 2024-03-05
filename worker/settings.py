@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     postgres_uri: PostgresDsn
     redis_uri: RedisDsn
     rabbitmq_uri: AmqpDsn
+    judge_file_path: str
 
     env: str = "production"
 

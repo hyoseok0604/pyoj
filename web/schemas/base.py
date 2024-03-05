@@ -39,3 +39,13 @@ class SerializeToModelSchema(BaseSchema, Generic[T]):
 class Creator(BaseSchema):
     id: int
     username: str
+
+
+class Problem(BaseSchema):
+    id: int
+    title: str
+
+
+class Language(BaseSchema):
+    id: int
+    display_name: str

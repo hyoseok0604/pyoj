@@ -8,14 +8,18 @@ from judger.logger import _log
 
 
 def compile(
-    working_directory: str, compile_command: str, timeout: int
+    working_directory: str,
+    compile_command: str,
+    timeout: int,
+    stdout_filename: str,
+    stderr_filename,
 ) -> CompileResult:
     _log.info("Compile started.")
     try:
         os.chdir(working_directory)
 
-        stdout = _open("compile_stdout")
-        stderr = _open("compile_stderr")
+        stdout = _open(stdout_filename)
+        stderr = _open(stderr_filename)
 
         with subprocess.Popen(
             args=shlex.split(compile_command),

@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, Index, sql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from web.models.base import BaseModel
+
+if TYPE_CHECKING:
+    from web.models.submission import SubmissionTestcaseResult
 
 
 class Systemcall(BaseModel):
@@ -14,6 +19,28 @@ class Systemcall(BaseModel):
     systemcall_group_id: Mapped[int] = mapped_column(ForeignKey("systemcall_group.id"))
     systemcall_group: Mapped["SystemcallGroup"] = relationship(
         back_populates="systemcalls"
+    )
+
+    systemcall_counts: Mapped[list["SystemcallCount"]] = relationship(
+        back_populates="systemcall"
+    )
+
+
+class SystemcallCount(BaseModel):
+    __tablename__ = "systemcall_count"
+
+    count: Mapped[int]
+
+    systemcall_id: Mapped[int] = mapped_column(
+        ForeignKey("systemcall.id"), primary_key=True
+    )
+    systemcall: Mapped[Systemcall] = relationship(back_populates="systemcall_counts")
+
+    submission_result_id: Mapped[int] = mapped_column(
+        ForeignKey("submission_testcase_result.id"), primary_key=True
+    )
+    submission_result: Mapped["SubmissionTestcaseResult"] = relationship(
+        back_populates="systemcall_counts"
     )
 
 
