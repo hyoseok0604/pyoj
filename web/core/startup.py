@@ -21,23 +21,22 @@ from web.models.language import Language
 
 
 async def startup_migration(app: FastAPI):
-    with DisableSqlalchemyLogger():
-        async with async_session() as session:
+    async with async_session() as session:
 
-            def wrapped_migration(session: Session):
-                migration(session.connection(), BaseModel.metadata)
+        def wrapped_migration(session: Session):
+            migration(session.connection(), BaseModel.metadata)
 
-            await session.run_sync(wrapped_migration)
+        await session.run_sync(wrapped_migration)
 
-            register_entities(
-                [
-                    notify_on_testcase_result_update_function,
-                    notify_on_testcase_result_update_trigger,
-                ]
-            )
+        register_entities(
+            [
+                notify_on_testcase_result_update_function,
+                notify_on_testcase_result_update_trigger,
+            ]
+        )
 
-            await session.run_sync(wrapped_migration)
-            await session.commit()
+        await session.run_sync(wrapped_migration)
+        await session.commit()
 
 
 async def startup_language_migration(app: FastAPI):

@@ -12,36 +12,31 @@ from alembic_postgresql_enum.operations import (
 )
 from sqlalchemy import Connection, MetaData
 
-from web.logger import _log
+from web.logger import DisableSqlalchemyLogger, _log
 
 EnumOp = CreateEnumOp | DropEnumOp | SyncEnumValuesOp
 
 
-def is_latest(connection: Connection, metadata: MetaData) -> bool:
-    migration_context = MigrationContext.configure(
-        connection, opts={"fn": _nothing, "include_schemas": False}
-    )
-    migration_script = produce_migrations(context=migration_context, metadata=metadata)
-    upgrade_ops = migration_script.upgrade_ops
-
-    if upgrade_ops is None:  # pragma: no cover
-        return False
-
-    return len(upgrade_ops.ops) == 0
-
-
 def migration(connection: Connection, metadata: MetaData):
-    migration_context = MigrationContext.configure(
-        connection, opts={"fn": _nothing, "include_schemas": False}
-    )
-    migration_script = produce_migrations(context=migration_context, metadata=metadata)
-    upgrade_ops = migration_script.upgrade_ops
+    with DisableSqlalchemyLogger():
+        migration_context = MigrationContext.configure(
+            connection,
+            opts={
+                "fn": _nothing,
+                "include_schemas": False,
+                "compare_server_default": True,
+            },
+        )
+        migration_script = produce_migrations(
+            context=migration_context, metadata=metadata
+        )
+        upgrade_ops = migration_script.upgrade_ops
 
-    if upgrade_ops is None:
-        _log.info("Upgrade Operations is None.")
-        return
+        if upgrade_ops is None:
+            _log.info("Upgrade Operations is None.")
+            return
 
-    ops = Operations(migration_context=migration_context)
+        ops = Operations(migration_context=migration_context)
 
     count = _run_operations_recursive(migration_context, ops, upgrade_ops.ops)
 
