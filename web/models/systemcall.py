@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Index, sql
+from sqlalchemy import ForeignKey, Index, PrimaryKeyConstraint, sql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from web.models.base import BaseModel
@@ -37,10 +37,16 @@ class SystemcallCount(BaseModel):
     systemcall: Mapped[Systemcall] = relationship(back_populates="systemcall_counts")
 
     submission_result_id: Mapped[int] = mapped_column(
-        ForeignKey("submission_testcase_result.id")
+        ForeignKey("submission_testcase_result.id"), primary_key=True
     )
     submission_result: Mapped["SubmissionTestcaseResult"] = relationship(
         back_populates="systemcall_counts"
+    )
+
+    __table_args__ = (
+        PrimaryKeyConstraint(
+            systemcall_id, submission_result_id, name="systemcall_count_pkey"
+        ),
     )
 
 
