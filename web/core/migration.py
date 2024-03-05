@@ -115,7 +115,7 @@ def _nothing(rev, context):
 
 
 if __name__ == "__main__":
-    engine = create_engine(str(settings.postgres_uri))
+    engine = create_engine(str(settings.postgres_uri), echo=True)
     connection = Connection(engine=engine)
     session = Session(connection)
     migration(connection, BaseModel.metadata)
@@ -189,4 +189,4 @@ if __name__ == "__main__":
     systemcall_count.submission_result = submission_testcase_result
     session.add(systemcall_count)
 
-    session.commit()
+    connection.commit()
