@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from web.core.settings import settings
 from web.logger import DisableSqlalchemyLogger, _log
 from web.models import (
+    BaseModel,
     Language,
     LanguageSystemcallCountLimit,
     Problem,
@@ -117,6 +118,7 @@ if __name__ == "__main__":
     engine = create_engine(str(settings.postgres_uri))
     connection = Connection(engine=engine)
     session = Session(connection)
+    migration(connection, BaseModel.metadata)
 
     user = User()
     user.username = "test"
