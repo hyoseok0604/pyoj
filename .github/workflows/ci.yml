@@ -107,15 +107,15 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run migration previous commit
         run: poetry run python3 web/core/migration.py
-      # - uses: actions/checkout@v4
-      # - name: Install poetry
-      #   run: pipx install poetry==1.7.1
-      # - name: Set up Python
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: '3.12'
-      #     cache: 'poetry'
-      # - name: Install Dependency
-      #   run: poetry install --no-interaction --no-root
-      # - name: Run migration previous commit
-      #   run: poetry run python3 web/core/migration.py
+      - uses: actions/checkout@v4
+      - name: Install poetry
+        run: pipx install poetry==1.7.1
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'poetry'
+      - name: Install Dependency
+        run: poetry install --no-interaction --no-root
+      - name: Run migration previous commit
+        run: poetry run python3 web/core/migration.py
