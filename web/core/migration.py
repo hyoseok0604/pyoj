@@ -114,7 +114,7 @@ def _nothing(rev, context):
 
 
 if __name__ == "__main__":
-    engine = create_engine(str(settings.postgres_uri))
+    engine = create_engine(str(settings.postgres_uri), echo=True)
     connection = Connection(engine=engine)
     session = Session(connection)
 
