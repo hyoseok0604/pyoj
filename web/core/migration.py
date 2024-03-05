@@ -187,4 +187,4 @@ if __name__ == "__main__":
     systemcall_count.submission_result = submission_testcase_result
     session.add(systemcall_count)
 
-    session.commit()
+    connection.commit()
