@@ -107,6 +107,13 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run migration previous commit
         run: poetry run python3 web/core/migration.py
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          POSTGRES_URI: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+          REDIS_URI: redis://localhost:6379/0
+          RABBITMQ_URI: amqp://guest:guest@localhost:5672/
+          SESSION_KEY: key
+          JUDGE_FILE_PATH: ${{ github.workspace }}/judge_file
       - uses: actions/checkout@v4
       - name: Install poetry
         run: pipx install poetry==1.7.1
@@ -119,3 +126,10 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run migration previous commit
         run: poetry run python3 web/core/migration.py
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          POSTGRES_URI: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+          REDIS_URI: redis://localhost:6379/0
+          RABBITMQ_URI: amqp://guest:guest@localhost:5672/
+          SESSION_KEY: key
+          JUDGE_FILE_PATH: ${{ github.workspace }}/judge_file
